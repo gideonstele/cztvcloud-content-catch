@@ -1,0 +1,28 @@
+{
+  "manifest_version":2,
+  "name":"ttkyh-cztvcloud-catch",
+  "description":"抓取学习与公众号文章里的内容并格式化，可用于新蓝云上稿",
+  "version":"1.0",
+  "permissions": [
+    "tabs",
+    "https://www.xuexi.cn/*",
+    "https://mp.weixin.qq.com/s/*"
+  ],
+  "browser_action": {
+    "default_icon":"images/ymg.png"
+  },
+  "icons": {
+    "16": "images/ymg16.png",
+    "48": "images/ymg48.png",
+    "128": "images/ymg.png"
+  },
+  "background": {
+    "scripts": ["eventemitter2.js", "js/background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.xuexi.cn/lgpage/*", "https://article.xuexi.cn/*", "https://*.xuexi.cn/local/*", "https://mp.weixin.qq.com/s/*"],
+      "js": ["js/ttkyh_parse.js"]
+    }
+  ]
+}
