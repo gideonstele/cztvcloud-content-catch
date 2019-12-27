@@ -1,26 +1,104 @@
-(function (window) {
-  let isReady = false;
+(function (window, undefined) {
 
-  function setReady() {
-    if (!isReady) {
-      isReady = true;
-      chrome.runtime.sendMessage({
-        action: 'ready',
-        data: '#js_content',
+  const BOXID = '___cztvcloud_catch';
+
+  const pageReady = (function (window) {
+    const readyCallbacks = [];
+    var whenReady = function(fn) {
+      readyCallbacks.push(fn);
+    };
+    const executeReady = function(fn) {
+      window.setTimeout(function () {
+        fn.call(document);
       });
-    }
-  }
-  if (document.readyState !== 'complete ') {
-    document.onreadystatechange = function (e) {
-      if (document.readyState === 'complete') {
-        setReady();
+    };
+    const _ = {
+      // Is the DOM ready to be used? Set to true once it occurs.
+      isReady: false,
+      // A counter to track how many items to wait for before
+      // the ready event fires. See #6781
+      readyWait: 1,
+      ready(wait) {
+        // Abort if there are pending holds or we're already ready
+        if (wait === true ? --_.readyWait : _.isReady) {
+          return undefined;
+        }
+        // Remember that the DOM is ready
+        _.isReady = true;
+        // If a normal DOM Ready event fired, decrement, and wait if need be
+        if (wait !== true && --_.readyWait > 0) {
+          return undefined;
+        }
+        whenReady = function (fn) {
+          readyCallbacks.push(fn);
+          while (readyCallbacks.length) {
+            fn = readyCallbacks.shift();
+            if (typeof fn === "function") {
+              executeReady(fn);
+            }
+          }
+        };
+        whenReady();
       }
     };
-  } else {
-    setReady();
+    /**
+     * The ready event handler and self cleanup method
+     */
+    function completed() {
+      document.removeEventListener( "DOMContentLoaded", completed );
+      window.removeEventListener( "load", completed );
+      _.ready();
+    }
+
+    // Catch cases where $(document).ready() is called
+    // after the browser event has already occurred.
+
+    if (document.readyState !== "loading") {
+      // Handle it asynchronously to allow scripts the opportunity to delay ready
+      window.setTimeout(_.ready);
+    } else {
+      // Use the handy event callback
+      document.addEventListener( "DOMContentLoaded", completed );
+      // A fallback to window.onload, that will always work
+	    window.addEventListener( "load", completed );
+    }
+
+    const ret = function (fn) {
+      whenReady(fn);
+    };
+
+    ret.isReady = _.isReady;
+
+    return ret;
+
+  })(window);
+
+  const panel = () => {
+    return `
+      <section class="${BOXID}-catch-panel">
+        <header>
+          <h3>抓取设置</h3>
+          <a href="javascript:;" class="${BOXID}-close-handler"></a>
+        </header>
+        <section class="${BOXID}-catch-body">
+          <section class="${BOXID}-form-body">
+            <section class="${BOXID}-row">
+              <label for="${BOXID}-t_selector">入口节点选择器</label>
+              <section class="${BOXID}-content">
+                <input type="text" id="t_selector" />
+              </section>
+            </section>
+          </section>
+          <section class="${BOXID}-form-body">
+            <button type="button" id="${BOXID}-t_do_catch">抓页面</button>
+          </section>
+        </section>
+      </section>
+    `;
   }
-  
+
   const utils = {
+    // 将css属性中的 url("path/to/resource.ext")改为 path/to/resource.ext
     trimCSSURL(string) {
       const matches = /url\((\"|\')(.*)(\"|\')\)/i.exec(string);
       if (matches && matches[2]) {
@@ -49,32 +127,8 @@
     },
   };
   
-  chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
-    if (message.action === 'catch') {
-      if (!isReady) {
-        sendResponse({
-          success: false,
-          message: '页面还没有加载完成，请稍后再试'
-        });
-        return ;
-      }
-      catchHtml(message.selector);
-    }
-  });
-  
+  // 抓取页面
   function catchHtml(selector) {
-    if (/mp\.weixin\.qq\.com/.test(location.hostname)) {
-      catchHtmlXx(selector);
-    } else {
-      chrome.runtime.sendMessage({
-        action: 'complete',
-        success: false,
-        message: '当前页面不支持抓取',
-      });
-    }
-  }
-  
-  function catchHtmlXx(selector) {
     let articleRoot = document.querySelector('#js_content') || document.querySelector(selector);
     if (!articleRoot) {
       chrome.runtime.sendMessage({
@@ -94,6 +148,11 @@
     });
   }
   
+  /**
+   * @function walkElements
+   * @description 核心方法，递归遍历所有元素
+   * @returns {Array<Node>} 可能存在空的p标签，需要进一步过滤
+  */
   function walkElements(root, seeds = [], context) {
     if (!context) {
       context = utils.createTextPara();
@@ -151,4 +210,35 @@
     });
     return root.innerHTML;
   }
+
+  const injectedPageUrl = chrome.extension.getURL('html/injected.html');
+  
+  chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+    if (message.action === 'catch') {
+      if (!isReady) {
+        sendResponse({
+          success: false,
+          message: '页面还没有加载完成，请稍后再试'
+        });
+        return ;
+      }
+      sendResponse({
+        success: true,
+        message: '页面已经加载完成，正在抓取页面'
+      });
+      catchHtml(message.selector);
+    }
+  });
+
+  function showFrame() {
+    const wrap = document.createElement('div');
+    wrap.id = BOXID;
+    wrap.innerHTML = panel();
+    document.body.append(wrap);
+  };
+
+  if (!document.getElementById(BOXID)) {
+    showFrame();
+  }
+
 })(window);

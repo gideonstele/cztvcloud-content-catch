@@ -5,6 +5,7 @@
   "version":"1.0",
   "permissions": [
     "tabs",
+    "activeTab",
     "https://www.xuexi.cn/*",
     "https://mp.weixin.qq.com/s/*"
   ],
@@ -17,12 +18,6 @@
     "128": "images/ymg.png"
   },
   "background": {
-    "scripts": ["eventemitter2.js", "js/background.js"]
-  },
-  "content_scripts": [
-    {
-      "matches": ["https://www.xuexi.cn/lgpage/*", "https://article.xuexi.cn/*", "https://*.xuexi.cn/local/*", "https://mp.weixin.qq.com/s/*"],
-      "js": ["js/ttkyh_parse.js"]
-    }
-  ]
+    "scripts": ["js/libs/smart-observe.js", "js/libs/eventemitter2.js", "js/background.js"]
+  }
 }

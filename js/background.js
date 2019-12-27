@@ -1,6 +1,22 @@
-const emitter = new window.EventEmitter2({
-  delimiter: ':',
-});
+// 注入全局
+window.EventEmitter = window.EventEmitter2;
+// 注入全局
+// window.observe;
+
+window.getConfig = function (key) {
+  if (key) {
+    return window.localStorage.getItem(key);
+  }
+  return Object.assign({}, window.localStorage);
+};
+
+window.setConfig = function (key, value = '') {
+  return window.localStorage.setItem(key, value);
+};
+
+if (!window.localStorage.length) {
+  window.setConfig('show_content_frame', 'true');
+}
 
 window.sendMessageToActiveContent = function sendMessageToActiveContent(message) {
   return new Promise((resolve, reject) => {
@@ -12,17 +28,26 @@ window.sendMessageToActiveContent = function sendMessageToActiveContent(message)
   });
 };
 
-// 创建一个响应式数据
-function createReactiveData (data = {}) {
-  const o = new Proxy(data, {
-    get: (t, key, recevier) => {
-
-    },
-  });
-}
-
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  if (request.action === 'ready') {
-    sendResponse(true);
+  switch(request.action) {
+    case 'ready':
+      sendResponse(true);
+      break;
+    case 'config:get':
+      sendResponse(window.getConfig(request.key));
+      break;
+    case 'catch:start':
+      break;
+    case 'catch:complete':
+      break;
   }
+});
+
+chrome.browserAction.onClicked.addListener(function (tab) {
+  chrome.tabs.insertCSS(null, {
+    file: 'styles/box.css'
+  });
+  chrome.tabs.executeScript(null, {
+    file: 'js/ttkyh_parse.js'
+  });
 });
