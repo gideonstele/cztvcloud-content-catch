@@ -2,3 +2,7 @@
 .idea
 .crx
 .pem
+node_modules
+dist/*
+package-lock.json
+yarn.lock
