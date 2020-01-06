@@ -6,8 +6,8 @@
   "permissions": [
     "tabs",
     "activeTab",
-    "https://www.xuexi.cn/*",
-    "https://mp.weixin.qq.com/s/*"
+    "http://*/*",
+    "https://*/*"
   ],
   "browser_action": {
     "default_icon":"images/ymg.png"
@@ -19,5 +19,9 @@
   },
   "background": {
     "scripts": ["dist/background.js"]
-  }
+  },
+  "web_accessible_resources": [
+    "dist/535877f50039c0cb49a6196a5b7517cd.woff",
+    "dist/732389ded34cb9c52dd88271f1345af9.ttf"
+  ]
 }

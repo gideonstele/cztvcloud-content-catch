@@ -1,3 +1,6 @@
+import trimCSSURL from '../utils/trimcssurl';
+import { createTextPara, createImgPara, createImgDescPara } from './para';
+
 // 处理空白的p标签
 const produceSeeds = (seeds) => {
   const ps = seeds.filter(s => s.hasChildNodes());
@@ -15,7 +18,7 @@ const produceSeeds = (seeds) => {
   */
 const walkElements = (root, seeds = [], context) => {
   if (!context) {
-    context = utils.createTextPara();
+    context = createTextPara();
     seeds.push(context);
   }
   root.childNodes.forEach((node, i) => {
@@ -25,11 +28,11 @@ const walkElements = (root, seeds = [], context) => {
       if (/div|section|article|p|ul|ol/i.test(node.tagName) && node.childNodes.length) {
         let contextNode;
         if (/img-desc|article-img-desc/i.test(node.className)) {
-          contextNode = utils.createImgDescPara();
+          contextNode = createImgDescPara();
         } else if (/img-para|article-img-desc/i.test(node.className)) {
-          contextNode = utils.createImgPara();
+          contextNode = createImgPara();
         } else {
-          contextNode = utils.createTextPara();
+          contextNode = createTextPara();
         }
         seeds.push(contextNode);
         walkElements(node, seeds, contextNode);
@@ -39,11 +42,11 @@ const walkElements = (root, seeds = [], context) => {
           contextNode = document.createElement('strong');
           context.append(contextNode);
         } else {
-          contextNode = context || utils.createTextPara();
+          contextNode = context || createTextPara();
         }
         walkElements(node, seeds, contextNode);
       } else if (/img/i.test(node.tagName)) {
-        const src = node.src.startsWith('data:image/') || !node.src ? (node.getAttribute('data-src') || utils.trimCSSURL(node.style.backgroundImage)) : node.src;
+        const src = node.src.startsWith('data:image/') || !node.src ? (node.getAttribute('data-src') || trimCSSURL(node.style.backgroundImage)) : node.src;
         const p = document.createElement('p');
         p.style.textAlign = 'center';
         p.style.lineHeight = '1.75em';
@@ -65,10 +68,10 @@ const walkElements = (root, seeds = [], context) => {
   /**
    * @function catchHtml
    * @description 抓取页面
-   * @param {String} selector 抓取入口
+   * @param {String|HTMLElement} selector 抓取入口
   */
 export const catchHtml = (selector) => {
-  let articleRoot = document.querySelector(selector);
+  let articleRoot = typeof selector === 'string' ? document.querySelector(selector) : selector;
   if (!articleRoot) {
     chrome.runtime.sendMessage({
       action: 'complete',
@@ -79,12 +82,7 @@ export const catchHtml = (selector) => {
   }
   const seeds = [];
   walkElements(articleRoot, seeds);
-  const formatted = produceSeeds(seeds);
-  chrome.runtime.sendMessage({
-    action: 'complete',
-    success: true,
-    html: formatted,
-  });
+  return produceSeeds(seeds);
 }
 
 

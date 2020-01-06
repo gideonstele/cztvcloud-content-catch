@@ -3,6 +3,6 @@
 .crx
 .pem
 node_modules
-dist/*
+package/dist/*
 package-lock.json
 yarn.lock

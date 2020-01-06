@@ -2,12 +2,6 @@ export const createTextPara = () => {
   const p = document.createElement('p');
   p.style.lineHeight = '1.75em';
   p.style.textAlign = 'left';
-};
-
-export const createTextPara = () => {
-  const p = document.createElement('p');
-  p.style.lineHeight = '1.75em';
-  p.style.textAlign = 'left';
   return p;
 };
 
