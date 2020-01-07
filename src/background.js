@@ -17,12 +17,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       break;
     case 'catch:complete':
       const url = chrome.extension.getURL('reflowed.html');
-      chrome.tabs.create({
-        url,
-      }, function (tab) {
-        console.log(tab);
-        console.log(request);
-        chrome.tabs.sendMessage(tab.id, request.dom)
+      chrome.tabs.create({ url }, function (tab) {
+        setTimeout(() => {
+          chrome.tabs.sendMessage(tab.id, request.dom);
+        }, 200);
       });
       break;
   }

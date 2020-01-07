@@ -1,7 +1,11 @@
 #___cztvcloud_catch_box {
+  display: block;
   overflow: visible;
   & *, & *:before, & *:after {
     box-sizing: border-box;
+  }
+  .el-form {
+    display: block !important;
   }
 }
 .___cztvcloud_catched {

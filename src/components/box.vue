@@ -1,7 +1,7 @@
 <template>
   <section v-if="showme" v-show="isshow" class="modal">
     <header class="modal-header">
-      <span class="modal-header-title">准备抓取</span>
+      <span class="modal-header-title">抓取内容</span>
       <button type="button" class="modal-header-button" @click="handleHide">&times;</button>
     </header>
     <section class="modal-body">
@@ -11,11 +11,11 @@
             <el-input v-model="model.selector" />
           </el-col>
           <el-col :offset="2" :span="8">
-            <el-button type="primary" @click="handleCatchDiv">选择图层</el-button>
+            <el-button type="primary" @click="handleCatchDiv">选择页面区域</el-button>
           </el-col>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSubmit">立即抓取</el-button>
+          <el-button type="primary" @click="handleSubmit">抓取并格式化</el-button>
         </el-form-item>
       </el-form>
     </section>
@@ -75,6 +75,13 @@ export default {
     handleSubmit() {
       this.handleCatch(this.model.selector);
     },
+    injectEntryDom(selector) {
+      if (selector) {
+        this.model.selector = selector;
+      } else {
+        this.$alert('没有找到抓取入口，您需要手动选择一下', 'cztvcloud抓取提示');
+      }
+    }
   }
 };
 </script>
@@ -107,6 +114,9 @@ export default {
     font-size: 24px;
     line-height: 26px;
     color: #909399;
+    border: none;
+    background-image: none;
+    background-color: transparent;
 
     &:hover {
       color: #409eff;

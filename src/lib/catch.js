@@ -74,8 +74,7 @@ export const catchHtml = (selector) => {
   let articleRoot = typeof selector === 'string' ? document.querySelector(selector) : selector;
   if (!articleRoot) {
     chrome.runtime.sendMessage({
-      action: 'complete',
-      success: false,
+      action: 'catch:failed',
       message: '没有找到页面指定入口元素',
     });
     return;
