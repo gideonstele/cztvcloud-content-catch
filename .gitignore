@@ -1,7 +1,7 @@
 .vscode
 .idea
-.crx
-.pem
+*.crx
+*.pem
 node_modules
 package/dist/*
 package-lock.json

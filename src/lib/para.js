@@ -1,7 +1,7 @@
 export const createTextPara = () => {
   const p = document.createElement('p');
   p.style.lineHeight = '1.75em';
-  p.style.textAlign = 'left';
+  p.style.textAlign = 'justify';
   return p;
 };
 
