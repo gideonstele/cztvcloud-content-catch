@@ -73,7 +73,11 @@ export default {
       });
     },
     handleSubmit() {
-      this.handleCatch(this.model.selector);
+      if (this.model.selector) {
+        this.handleCatch(this.model.selector);
+      } else {
+        this.$alert('没有找到抓取入口，您需要手动选择一下', 'cztvcloud抓取提示');
+      }
     },
     injectEntryDom(selector) {
       if (selector) {

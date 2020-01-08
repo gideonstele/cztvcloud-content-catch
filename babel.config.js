@@ -9,8 +9,8 @@ module.exports = {
       "babel-plugin-component",
       {
         "libraryName": "element-ui",
-        "styleLibraryName": "theme-chalk",
-        "style": true,
+        // "styleLibraryName": "theme-chalk",
+        "style": false,
       }
     ],
   ],

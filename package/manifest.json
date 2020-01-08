@@ -2,8 +2,9 @@
   "manifest_version":2,
   "name":"ttkyh-cztvcloud-catch",
   "description":"抓取学习与公众号文章里的内容并格式化，可用于新蓝云上稿",
-  "version":"1.0",
+  "version":"2.0",
   "permissions": [
+    "storage",
     "tabs",
     "activeTab",
     "http://*/*",
@@ -17,11 +18,8 @@
     "48": "images/ymg48.png",
     "128": "images/ymg.png"
   },
+  "options_page": "dist/options_page.html",
   "background": {
     "scripts": ["dist/background.js"]
-  },
-  "web_accessible_resources": [
-    "dist/535877f50039c0cb49a6196a5b7517cd.woff",
-    "dist/732389ded34cb9c52dd88271f1345af9.ttf"
-  ]
+  }
 }

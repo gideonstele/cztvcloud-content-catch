@@ -1,0 +1,20 @@
+html ,body {
+  padding: 0;
+  height: 100%;
+}
+body {
+  margin: 0;
+}
+a {
+  text-decoration: none;
+  color: #666;
+  
+  &:link, &:visited {
+    text-decoration: none;
+    color: #666;
+  }
+  &:hover {
+    color: #409EFF;
+    text-decoration: none;
+  }
+}

@@ -1,9 +1,13 @@
+$--font-path: 'https://unpkg.com/element-ui@2.13.0/lib/theme-chalk/fonts/';
+@import "~element-ui/packages/theme-chalk/src/index";
+
 #___cztvcloud_catch_box {
   display: block;
   overflow: visible;
   & *, & *:before, & *:after {
     box-sizing: border-box;
   }
+  
   .el-form {
     display: block !important;
   }

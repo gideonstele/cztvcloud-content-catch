@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import Vue from 'vue';
 import shortid from 'shortid';
-import ElementUI from 'element-ui';
+import './lib/install';
 
 import { catchHtml } from './lib/catch';
 import findEntryDom  from './lib/findEntryDom';
@@ -13,10 +13,6 @@ const BOXID = '___cztvcloud_catch_box';
 let domready = false;
 
 console.log('cztvcloud catch script loaded!');
-
-Vue.use(ElementUI, {
-  size: 'small',
-});
 
 const appendBox = () => {
   const $box = document.getElementById(BOXID);
@@ -38,10 +34,6 @@ const appendBox = () => {
     `,
     methods: {
       handleCatch(selector) {
-        if (!selector.trim()) {
-          this.$alert('插件没有检测到内容区域，请先选择要抓取的内容区域', 'cztvcloud插件提示');
-          return;
-        }
         const formatted = catchHtml(selector);
         chrome.runtime.sendMessage({
           action: 'catch:complete',
@@ -66,7 +58,7 @@ $(() => {
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
   switch (message.action) {
     case 'catch:failed':
-      ElementUI.MessageBox.alert(message.message);
+      ElementUI.MessageBox.alert(message.message, '抓取失败');
       break;
     default:
       break;

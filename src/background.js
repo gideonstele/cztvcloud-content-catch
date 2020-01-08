@@ -16,7 +16,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       sendMessageToActiveContent(true);
       break;
     case 'catch:complete':
-      const url = chrome.extension.getURL('reflowed.html');
+      const url = chrome.extension.getURL('dist/reflowed.html');
       chrome.tabs.create({ url }, function (tab) {
         setTimeout(() => {
           chrome.tabs.sendMessage(tab.id, request.dom);
@@ -28,14 +28,14 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
 chrome.browserAction.onClicked.addListener(function (tab) {
   // chrome.tabs.insertCSS(null, {
-  //   file: 'dist/chunk_style.css'
+  //   file: 'https://unpkg.com/element-ui@2.13.0/lib/theme-chalk/index.css'
   // });
   chrome.tabs.insertCSS(tab.id, {
     file: 'dist/content_script_style.css'
   });
-  // chrome.tabs.executeScript(tab.id, {
-  //   file: 'dist/vendors~content_script.js'
-  // });
+  chrome.tabs.executeScript(tab.id, {
+    file: 'dist/vendors__content_script.js'
+  });
   chrome.tabs.executeScript(tab.id, {
     file: 'dist/content_script.js'
   });
