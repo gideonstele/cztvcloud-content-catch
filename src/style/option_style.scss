@@ -18,3 +18,17 @@ a {
     text-decoration: none;
   }
 }
+
+.page {
+  width: 640px;
+}
+.page-header{
+  margin: 0;
+  padding: 5px 5px 16px 5px;
+  border-bottom: 1px dotted #ccc;
+  font-size: 16px;
+  font-weight: 600;
+}
+.page-main {
+  padding: 15px;
+}

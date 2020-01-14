@@ -1,16 +1,14 @@
-export const storageset = (kv) => {
+export const _set = (kv) => {
   return new Promise((resolve, reject) => {
     try {
-      chrome.storage.sync.set(kv, function() {
-        resolve();
-      });
+      chrome.storage.sync.set(kv, resolve);
     } catch (e) {
       reject(e);
     }
   });
 };
 
-export const storageget = (key) => {
+export const _get = (key) => {
   return new Promise((resolve, reject) => {
     try {
       chrome.storage.sync.get(key, function(value) {
@@ -36,7 +34,51 @@ export const getItem = (key) => {
   });
 };
 
-export const storageremove = (key) => {
+export const nsstorage = (item) => {
+  return {
+    set (kv) {
+      return new Promise((resolve, reject) => {
+        try {
+          chrome.storage.sync.set({
+            [item]: kv,
+          }, resolve);
+        } catch (e) {
+          reject(e);
+        }
+      });
+    },
+    get (key) {
+      return new Promise((resolve, reject) => {
+        try {
+          chrome.storage.sync.get(item, function(results) {
+            const value = results[item];
+            console.log('get collaction', results);
+            console.log('get value', value);
+            key ? resolve(value[key]) : resolve(value);
+          });
+        } catch (e) {
+          reject(e);
+        }
+      });
+    },
+    clear () {
+      return new Promise((resolve, reject) => {
+        chrome.storage.sync.clear(key, function(value) {
+          resolve(value);
+        });
+      });
+    },
+    remove () {
+      return new Promise((resolve, reject) => {
+        chrome.storage.sync.remove(key, function(value) {
+          resolve(value);
+        });
+      });
+    },
+  };
+};
+
+export const remove = (key) => {
   return new Promise((resolve, reject) => {
     chrome.storage.sync.remove(key, function(value) {
       resolve(value);
@@ -44,7 +86,7 @@ export const storageremove = (key) => {
   });
 };
 
-export const storageclear = (key) => {
+export const clear = (key) => {
   return new Promise((resolve, reject) => {
     chrome.storage.sync.clear(key, function(value) {
       resolve(value);
@@ -53,11 +95,12 @@ export const storageclear = (key) => {
 };
 
 const storage = {
-  set: storageset,
-  get: storageget,
+  set: _set,
+  get: _get,
   getItem,
-  remove: storageremove,
-  storageclear: storageclear,
+  remove,
+  clear,
+  namespace: nsstorage,
 };
 
 export default storage;
