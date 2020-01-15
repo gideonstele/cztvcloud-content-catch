@@ -43,6 +43,7 @@ const baseConfig = {
   resolve: {
     alias: {
       '_utils': path.resolve(__dirname, 'src/utils'),
+      '_components': path.resolve(__dirname, 'src/components'),
     },
   },
   module: {
