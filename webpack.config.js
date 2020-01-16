@@ -4,7 +4,7 @@ const TerserPlugin = require('terser-webpack-plugin');
 const VueLoaderPlugin = require('vue-loader/lib/plugin-webpack4');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-
+const LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 
 const extTypes = {
   'javascript': 'js',
@@ -61,6 +61,7 @@ const baseConfig = {
     ]
   },
   plugins: [
+    new LodashModuleReplacementPlugin(),
   ]
 };
 
@@ -114,7 +115,7 @@ const contentConfig = {
     new MiniCssExtractPlugin({
       filename: '[name]_style.css'
     }),
-    new VueLoaderPlugin()
+    new VueLoaderPlugin(),
   ],
   optimization: {
     splitChunks: {

@@ -1,4 +1,15 @@
+import { getDefaultConfig } from './config/index';
+import storage from './utils/localstore';
+
 console.log('background ready');
+
+(async () => {
+  const isInstall = await storage.getItem('isInstall');
+  if (!isInstall) {
+    await storage.set(getDefaultConfig());
+    console.log('installDone');
+  }
+})();
 
 const sendMessageToActiveContent = function sendMessageToActiveContent(message) {
   return new Promise((resolve, reject) => {

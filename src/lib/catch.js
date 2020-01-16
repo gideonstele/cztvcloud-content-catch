@@ -1,5 +1,5 @@
 import shortid from 'shortid';
-import _ from 'lodash';
+// import _ from 'lodash';
 import trimCSSURL from '../utils/trimcssurl';
 import { createTextPara, createImgPara, createImgDescPara } from './para';
 
@@ -12,15 +12,6 @@ const produceSeeds = (seeds) => {
   });
   return root.innerHTML;
 }
-
-const tryParaType = (node) => {
-  if (/img-desc|article-img-desc/i.test(node.className)) {
-    return 'img';
-  } else if (/img-para|article-img-desc/i.test(node.className)) {
-    return 'desc';
-  }
-  return 'normal';
-};
 
 /**
  * @function traverseNodes

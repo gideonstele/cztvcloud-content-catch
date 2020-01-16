@@ -45,7 +45,7 @@
   </div>
 </template>
 <script>
-import { cloneDeep } from 'lodash';
+import { merge } from 'lodash';
 import DialogEditRule from '_components/options/DialogEditRule.vue';
 
 export default {
@@ -93,7 +93,7 @@ export default {
           ignoreFirstImg: model.ignoreFirstImg,
         };
       }
-      this.sitesConfig.set(cloneDeep(this.sites)).then(() => {
+      this.sitesConfig.set(merge({}, this.sites)).then(() => {
         this.loading = false;
         this.$message({
           type: 'success',

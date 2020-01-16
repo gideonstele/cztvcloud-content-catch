@@ -3,23 +3,22 @@ import Vue from 'vue';
 import shortid from 'shortid';
 import './lib/install';
 
-import { catchHtml } from './lib/catch';
-import findEntryDom  from './lib/findEntryDom';
-import storage from './utils/localstore';
-
+// import { catchHtml } from './lib/catch';
+import { catchHtml } from './lib/catchHtml';
+import { common, output, matchedSite } from './lib/matchConfig';
+import { findEntryDom } from './lib/findEntryDom';
 import './style/content_style.scss';
 import Box from './components/box.vue';
 
 const BOXID = '___cztvcloud_catch_box';
-let domready = false;
-
 console.log('cztvcloud catch script loaded!');
 
-window.config = {};
+window.$ = $;
 
-const getConfig = async () => {
-  const cfgCommon = await storage.get(['common', location.hostname]);
-  return _.merge(...Object.values(cfgCommon));
+window.configs = {
+  site: {},
+  common: {},
+  output: {},
 };
 
 const appendBox = () => {
@@ -43,7 +42,6 @@ const appendBox = () => {
     methods: {
       async handleCatch(selector) {
         const formatted = await catchHtml(selector);
-        console.log(formatted);
         chrome.runtime.sendMessage({
           action: 'catch:complete',
           dom: formatted,
@@ -55,16 +53,21 @@ const appendBox = () => {
     }
   });
   vm.$mount(`#${BOXID}`);
-  vm.injectEntryDom(findEntryDom());
   return vm;
 };
 
 $(async () => {
-  domready = true;
   // 取到配置放在这里
-  window.config = await getConfig();
-  console.log(config);
-  appendBox();
+  const [ commonCfg, outputCfg, site ] = await Promise.all([
+    common.get(),
+    output.get(),
+    matchedSite(location.href),
+  ]);
+  window.configs.site = site;
+  window.configs.common = commonCfg;
+  window.configs.output = outputCfg;
+  const vm = appendBox();
+  vm.injectEntryDom(findEntryDom());
 });
 
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {

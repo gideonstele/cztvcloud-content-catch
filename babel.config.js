@@ -13,5 +13,8 @@ module.exports = {
         "style": false,
       }
     ],
+    [
+      'babel-plugin-lodash',
+    ],
   ],
 };
