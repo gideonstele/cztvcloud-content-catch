@@ -1,24 +1,7 @@
 import $ from 'jquery';
 import { flattenDeep } from 'lodash';
 
-const hasPlainTextChildNode = (n) => {
-  let has = false;
-  n.childNodes.forEach(node => {
-    if (node.nodeType === 3) {
-      has = true;
-    }
-  });
-  return has;
-};
-
-const getImgSrc = (img, configs) => {
-  const $img = $(img);
-  if (img.width < 220 && img.height < 220) {
-    return '';
-  }
-  const src = img.src.startsWith('data:image/') || !img.src ? ($img.attr('data-src') || trimCSSURL($img.css('background-image'))) : img.src;
-  return src;
-};
+/*
 
 function parsePara(p, configs) {
   const results = [];
@@ -30,7 +13,7 @@ function parsePara(p, configs) {
       if (node.TagName === 'img') {
         const src = getImgSrc(node, configs);
         src && results.push({ type: 'img', src });
-      } else if ($node.is('span,b,strong') && $node.css('font-weight') > 400) {
+      } else if ($node.is('span,b,strong') && isBold($node)) {
         results.push({
           type: 'inline',
           tag: 'strong',
@@ -43,6 +26,117 @@ function parsePara(p, configs) {
   });
   return results;
 }
+嵌套遍历的逻辑
+if (/^(div|section|article|header|aside|p|ul|ol)$/ig.test(node.tagName) && node.childNodes.length) {
+    if ($node.is(site.imgdesc)) {
+      collections.push({
+        type: 'desc',
+        text: node.textContent,
+      });
+    } else if (hasPlainTextChildNode(node)) { // 如果节点存在直接的文本节点，进行子遍历
+      collections.push(walk(node, configs, []));
+    } else {
+      if ($node.is('p')) {
+        collections.push(parsePara(node, configs));
+      } else {
+        walk(node, configs, collections);
+      }
+    }
+  } else if (/^h[1-6]$/ig.test(node.tagName)) {
+    collections.push({
+      type: 'title',
+      tag: node.tagName,
+      text: node.textContent.trim(),
+    });
+  } else if (/^(span|strong|em|i|small|font)$/) {
+    collections.push({
+      type: 'inline',
+      tag: $node.is('span,b,strong') && isBold($node) ? 'strong' : 'span',
+      text: node.textContent,
+    });
+  } else if (/^img$/ig.test(node.tagName)) {
+    collections.push({
+      type: 'img',
+      src: getImgSrc(node, configs),
+    });
+  } else {
+    console.log('[cztvcloud - catch] Element Ignored: ', node);
+  }
+*/
+
+// 元素是块(block)还是行(inline)或不可见(false)
+const inlineOrBlock = ($n) => {
+  const d = $n.css('display');
+  if (d === 'none' || $n.is(':hidden')) {
+    return false;
+  }
+  if (/^inline/.test(d)) {
+    return 'inline';
+  } else {
+    return 'block';
+  }
+};
+
+const isBold = ($n) => $n.css('font-weight') > 400;
+
+const isImg = ($n) => $n.is('img')
+
+const getImgSrc = (img) => {
+  const $img = $(img);
+  if (img.width < 220 && img.height < 220) {
+    return '';
+  }
+  const src = img.src.startsWith('data:image/') || !img.src ? ($img.attr('data-src') || trimCSSURL($img.css('background-image'))) : img.src;
+  return src;
+};
+
+const analysisChildNodeType = (n) => {
+  const results = {
+    nodes: [],
+    needDivied: false,
+    devideIndexs: [],
+  };
+  n.childNodes.forEach((node, index) => {
+    if (node.nodeType === 3) {
+      result.nodes.push({
+        index,
+        type: 'text',
+        text: node.textContent.trim(),
+      });
+    } else if (node.nodeType === 1) {
+      const $node = $(node);
+      const display = inlineOrBlock($node);
+      if (isImg($node)) {
+        result.nodes.push({
+          index,
+          type: 'img',
+          src: getImgSrc(node),
+        });
+        return ;
+      } else if (/^(br|hr|svg|canvas|table|audio|video|button|select|script|textarea|input|iframe)$/ig.test(node.tagName)) {
+        console.log('[cztvcloud - catch] Element Ignored: ', node.tagName);
+      } else {
+        if (display === 'inline') {
+          result.nodes.push({
+            index,
+            type: 'inline',
+            bold: isBold($node),
+            text: node.textContent,
+          });
+        } else if (display === 'block') {
+          results.needDivied = true;
+          results.devideIndexs.push(index);
+          result.nodes.push({
+            index,
+            type: 'block',
+            el: node,
+          });
+        }
+      }
+    }
+  });
+  return results;
+};
 
 function walk($root, configs, collections = []) {
   const site = configs.site;
@@ -67,41 +161,7 @@ function walk($root, configs, collections = []) {
         console.log('[cztvcloud - catch] Element Ignored By Option: ', node);
         return;
       }
-      if (/^(div|section|article|header|aside|p|ul|ol)$/ig.test(node.tagName) && node.childNodes.length) {
-        if ($node.is(site.imgdesc)) {
-          collections.push({
-            type: 'desc',
-            text: node.textContent,
-          });
-        } else if (hasPlainTextChildNode(node)) { // 如果节点存在直接的文本节点，进行子遍历
-          collections.push(walk(node, configs, []));
-        } else {
-          if ($node.is('p')) {
-            collections.push(parsePara(node, configs));
-          } else {
-            walk(node, configs, collections);
-          }
-        }
-      } else if (/^h[1-6]$/ig.test(node.tagName)) {
-        collections.push({
-          type: 'title',
-          tag: node.tagName,
-          text: node.textContent.trim(),
-        });
-      } else if (/^(span|strong|em|i|small|font)$/) {
-        collections.push({
-          type: 'inline',
-          tag: $node.is('span,b,strong') && $node.css('font-weight') > 400 ? 'strong' : 'span',
-          text: node.textContent,
-        });
-      } else if (/^img$/ig.test(node.tagName)) {
-        collections.push({
-          type: 'img',
-          src: getImgSrc(node, configs),
-        });
-      } else {
-        console.log('[cztvcloud - catch] Element Ignored: ', node);
-      }
+      
     }
   });
   return collections;
