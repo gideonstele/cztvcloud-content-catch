@@ -2,6 +2,8 @@ $--font-path: 'https://unpkg.com/element-ui@2.13.0/lib/theme-chalk/fonts/';
 @import "~element-ui/packages/theme-chalk/src/index";
 
 #___cztvcloud_catch_box {
+  position: relative;
+  z-index: 9999;
   display: block;
   overflow: visible;
   & *, & *:before, & *:after {
