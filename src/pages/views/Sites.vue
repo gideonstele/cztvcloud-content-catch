@@ -14,6 +14,7 @@
               <div class="card-header">
                 <h4>{{site.name}}</h4>
                 <el-button type="text" class="btn-edit" @click="handleEdit(site)">编辑</el-button>
+                <el-button type="text" class="btn-edit" @click="handleRemove(site)">删除</el-button>
               </div>
             </template>
             <div class="detail">
@@ -73,6 +74,23 @@ export default {
     handleEdit(site) {
       this.$refs['dialog'].showEdit(site);
     },
+    handleRemove(site) {
+      this.loading = true;
+      Reflect.deleteProperty(this.sites, site.name);
+      this.sitesConfig.set(merge({}, this.sites)).then(() => {
+        this.loading = false;
+        this.$message({
+          type: 'success',
+          message: '保存设置成功',
+        });
+      }).catch(() => {
+        this.loading = false;
+        this.$message({
+          type: 'error',
+          message: '保存设置失败',
+        });
+      });
+    },
     handleSubmit(type, model) {
       this.loading = true;
       if (type === 'create') {
@@ -105,7 +123,7 @@ export default {
           type: 'error',
           message: '保存设置失败',
         });
-      })
+      });
     }
   },
 };
@@ -118,7 +136,8 @@ export default {
 }
 .box-card {
   margin-right: 10px;
-  flex: 1 1;
+  margin-bottom: 10px;
+  // flex: 1 1;
   width: 360px;
 
   .card-header {

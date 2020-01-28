@@ -1,3 +1,4 @@
+import { isEmpty } from 'lodash';
 import { nsstorage } from '_utils/localstore';
 
 export const common = nsstorage('common');
@@ -17,17 +18,20 @@ export const matchedSite = async (url) => {
     imgdesc: [],
   };
   s.forEach(site => {
+    if (isEmpty(site)) {
+      return ;
+    }
     const r = new RegExp(site.regexp, 'ig');
     const matches = simpleUrl.match(r);
     if (matches && matches.length) {
       matchedConfig.names.push(site.name);
       matchedConfig.regexps.push(site.regexp);
       matchedConfig.entry = matchedConfig.entry || site.entry;
-      matchedConfig.ignores.push(site.ignores);
-      matchedConfig.imgdesc.push(site.imgdesc);
+      site.ignores && matchedConfig.ignores.push(site.ignores);
+      site.imgdesc && matchedConfig.imgdesc.push(site.imgdesc);
     }
   });
-  matchedConfig.ignores = matchedConfig.ignores.join(',');
-  matchedConfig.imgdesc = matchedConfig.imgdesc.join(',');
+  matchedConfig.ignores = matchedConfig.ignores.length ? matchedConfig.ignores.join(',') : '';
+  matchedConfig.imgdesc = matchedConfig.imgdesc.length ? matchedConfig.imgdesc.join(',') : '';
   return matchedConfig;
 }

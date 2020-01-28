@@ -9,6 +9,7 @@ import App from './pages/AppOptions.vue';
 import Common from './pages/views/Common.vue';
 import Output from './pages/views/Output.vue';
 import Sites from './pages/views/Sites.vue';
+import Help from './pages/views/Help.vue';
 
 Vue.use(VueRouter);
 
@@ -29,6 +30,11 @@ const router = new VueRouter({
       path: '/sites',
       name: 'sites',
       component: Sites,
+    },
+    {
+      path: '/help',
+      name: 'help',
+      component: Help,
     },
   ],
 });

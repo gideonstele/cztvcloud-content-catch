@@ -1,10 +1,10 @@
 <template>
-  <section v-if="showme" v-show="isshow" class="modal">
-    <header class="modal-header">
-      <span class="modal-header-title">抓取内容</span>
-      <button type="button" class="modal-header-button" @click="handleHide">&times;</button>
+  <section v-if="showme" v-show="isshow" class="cztvcatchmodal">
+    <header class="cztvcatchmodal-header">
+      <span class="cztvcatchmodal-header-title">抓取内容</span>
+      <button type="button" class="cztvcatchmodal-header-button" @click="handleHide">&times;</button>
     </header>
-    <section class="modal-body">
+    <section class="cztvcatchmodal-body">
       <el-form ref="form" :model="model" label-width="80px">
         <el-form-item label="入口区域">
           <el-col :span="14">
@@ -90,27 +90,28 @@ export default {
 };
 </script>
 <style lang="scss" scoped>
-.modal {
-  position: fixed;
-  right: 20px;
-  bottom: 20px;
-  width: 480px;
+.cztvcatchmodal {
+  position: fixed !important;
+  display: block !important;
+  right: 20px !important;;
+  bottom: 20px !important;;
+  width: 480px !important;;
   border-radius: 3px;
   box-shadow: 0 1px 3px rgba(0,0,0,.3);
   background-color: #fff;
 
-  .modal-header {
+  .cztvcatchmodal-header {
     height: 36px;
     padding: 5px 10px;
     border-bottom: 1px solid #eee;
     
   }
-  .modal-header-title {
+  .cztvcatchmodal-header-title {
     font-size: 16px;
     line-height: 26px;
     color: #303133;
   }
-  .modal-header-button {
+  .cztvcatchmodal-header-button {
     position: absolute;
     right: 10px;
     top: 5px;
@@ -126,7 +127,7 @@ export default {
       color: #409eff;
     }
   }
-  .modal-body {
+  .cztvcatchmodal-body {
     padding: 10px;
   }
 }

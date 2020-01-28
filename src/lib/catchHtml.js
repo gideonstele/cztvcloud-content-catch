@@ -14,10 +14,13 @@ const inlineOrBlock = ($n) => {
   }
 };
 
+// 判断当前元素是不是加粗的
 const isBold = ($n) => $n.css('font-weight') > 400;
 
+// 判断当前元素是不是图片
 const isImg = ($n) => $n.is('img')
 
+// 获取图片真实的地址（考虑懒加载和防爬）
 const getImgSrc = (img) => {
   const $img = $(img);
   if (img.width < 220 && img.height < 220) {
@@ -43,7 +46,7 @@ const analysisChildNodeType = (n, site) => {
       const display = inlineOrBlock($node);
       if (/^(br|hr|svg|canvas|table|audio|video|button|select|script|textarea|input|iframe)$/ig.test(node.tagName)) {
         console.log('[cztvcloud - catch] Element Ignored: ', node);
-      } else if ($node.is(site.ignores)) {
+      } else if (site.ignores && $node.is(site.ignores)) {
         console.log('[cztvcloud - catch] Element Ignored By Setting: ', node);
       } else if (node.tagName.match(/^h(1-6)$/)) {
         result.push({
@@ -61,7 +64,7 @@ const analysisChildNodeType = (n, site) => {
           src: getImgSrc(node),
         });
         return ;
-      } else if ($node.is(site.imgdesc)) {
+      } else if (site.imgdesc && $node.is(site.imgdesc)) {
         result.push({
           index: result.length,
           type: 'desc',
@@ -172,6 +175,7 @@ export const catchHtml = (selector) => {
   }
   const analysisTree = analysisChildNodeType($entry, configs.site);
   const parsed = flattenDeep(parseTree(analysisTree, configs, []));
+  console.log(parsed);
   const html = parsed.filter(node => !!(node && node.innerHTML)).map(node => {
     return node.outerHTML ? node.outerHTML : node.contentText;
   }).join('');

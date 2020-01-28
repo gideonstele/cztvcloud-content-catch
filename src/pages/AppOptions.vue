@@ -23,6 +23,12 @@
             <span>站点设置</span>
           </template>
         </el-menu-item>
+        <el-menu-item key="4" index="4">
+          <i class="el-icon-help"></i>
+          <template v-slot:title>
+            <span>帮助说明</span>
+          </template>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     <el-main class="c-container">
@@ -38,6 +44,7 @@ export default {
         '1': { name: 'common' },
         '2': { name: 'output' },
         '3': { name: 'sites' },
+        '4': { name: 'help' },
       }
     };
   },

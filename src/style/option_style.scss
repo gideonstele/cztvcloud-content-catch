@@ -20,7 +20,7 @@ a {
 }
 
 .page {
-  width: 720px;
+  width: 920px;
 }
 .page-header{
   margin: 0;
@@ -31,4 +31,20 @@ a {
 }
 .page-main {
   padding: 15px;
+}
+
+.atom-tac {
+  text-align: center;
+}
+.atom-tal {
+  text-align: left;
+}
+.atom-tar {
+  text-align: right;
+}
+.atom-taj {
+  text-align: justify;
+}
+.atom-ff {
+  font-family: "Courier New", Courier, monospace;
 }
