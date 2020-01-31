@@ -7,7 +7,10 @@ const MAX_PIC_VALUE = 220;
 // * 400以上为加粗
 const BOLD_WEIGHT = 400;
 
-const lineFeedTags = ["P", "SECTION", "BLOCKQUOTE"];
+const lineFeedTags = ["P", "SECTION", "BLOCKQUOTE",
+                      "H1", "H2", "H3", "H4", "H5", "H6"];
+const ignoreTags = ["BR", "HR", "SVG", "CANVAS", "TABLE", "AUDIO", "VIDEO", 
+                    "BUTTON", "SELECT", "SCRIPT" ,"TEXTAREA", "INPUT", "IFRAME"]
 
 class ParagraphNode {
   constructor(type, content = "") {
@@ -48,7 +51,10 @@ const getImgSrc = (img) => {
 // * 第一步，先往下找最底层，取节点
 // * 节点中包括文本及图片
 const analysisWechatNode = (node, total = []) => {
-  if(node.childNodes.length) {
+  if(ignoreTags.includes(node.tagName)){
+    // todo ignore tag
+  }
+  else if(node.childNodes.length) {
     node.childNodes.forEach(n => total.concat(analysisWechatNode(n, total)));
   } else {
     total.push(node);
@@ -70,10 +76,10 @@ const filterNodes = (nodes) => {
 
 // * 第四步，生成结构
 // * 不同样式等因素造成内容存于不同节点，将其修复
-// todo 微信公众号用于看起来目前用于分端的标签为<p>, <section>, <blockquote>
+// todo 微信公众号用于分段的标签为<p>, <section>, <blockquote>
 const getParagraphNode = (node) => {
   let result = node;
-  if(!lineFeedTags.includes(node.tagName)) {
+  if(!lineFeedTags.includes(node.tagName) && node.parentNode) {
     result = getParagraphNode(node.parentNode)
   }
   return result;
@@ -297,7 +303,7 @@ export const catchHtml = (selector) => {
   const wechatNodes = analysisWechatNode($entry);
   const articleNodes = filterNodes(wechatNodes);
   const paragraphContent = createParagraphContent(articleNodes);
-  const parsed = parseDOM(paragraphContent)
+  const parsed = parseDOM(paragraphContent);
 
   // const analysisTree = analysisChildNodeType($entry, configs.site);
   // const parsed = flattenDeep(parseTree(analysisTree, configs, []));
