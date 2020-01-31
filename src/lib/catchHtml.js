@@ -7,7 +7,7 @@ const MAX_PIC_VALUE = 220;
 // * 400以上为加粗
 const BOLD_WEIGHT = 400;
 
-const lineFeedTags = ["P", "SECTION", "BLOCKQUOTE",
+const lineFeedTags = ["IMG", "P", "SECTION", "BLOCKQUOTE",
                       "H1", "H2", "H3", "H4", "H5", "H6"];
 const ignoreTags = ["BR", "HR", "SVG", "CANVAS", "AUDIO", "VIDEO", 
                     "BUTTON", "SELECT", "SCRIPT" ,"TEXTAREA", "INPUT", "IFRAME"]
