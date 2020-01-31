@@ -9,7 +9,7 @@ const BOLD_WEIGHT = 400;
 
 const lineFeedTags = ["P", "SECTION", "BLOCKQUOTE",
                       "H1", "H2", "H3", "H4", "H5", "H6"];
-const ignoreTags = ["BR", "HR", "SVG", "CANVAS", "TABLE", "AUDIO", "VIDEO", 
+const ignoreTags = ["BR", "HR", "SVG", "CANVAS", "AUDIO", "VIDEO", 
                     "BUTTON", "SELECT", "SCRIPT" ,"TEXTAREA", "INPUT", "IFRAME"]
 
 class ParagraphNode {
@@ -48,7 +48,7 @@ const getImgSrc = (img) => {
   return src;
 };
 
-// * 第一步，先往下找最底层，取节点
+// ! 第一步，先往下找最底层，取节点
 // * 节点中包括文本及图片
 const analysisWechatNode = (node, total = []) => {
   if(ignoreTags.includes(node.tagName)){
@@ -63,26 +63,29 @@ const analysisWechatNode = (node, total = []) => {
   return total;
 };
 
-// * 第二步，过滤节点
+// ! 第二步，过滤节点
 // * 只保留文本或图片节点
-const filterNodes = (nodes) => {
-  return nodes.filter(node => (node.tagName === "IMG" || node.textContent.trim()));
+const filterImgOrText = (nodes) => {
+  return nodes.filter(node => (
+    node.tagName === "IMG" || // todo 取图片
+    (node.textContent.trim() && node.nodeType !== 8) // todo 取非注释文本, 8为注释节点
+    ));
 }
 
-// * 第三步，自定义过滤
-// * 过滤某些特定的内容，如小于200的图片，gif等
-// todo 
-
-
-// * 第四步，生成结构
-// * 不同样式等因素造成内容存于不同节点，将其修复
-// todo 微信公众号用于分段的标签为<p>, <section>, <blockquote>
-const getParagraphNode = (node) => {
-  let result = node;
-  if(!lineFeedTags.includes(node.tagName) && node.parentNode) {
-    result = getParagraphNode(node.parentNode)
-  }
+const filterNodes = (nodes) => {
+  let result = nodes;
+  result = filterImgOrText(result);
   return result;
+}
+
+// ! 第三步，生成结构
+// * 不同样式等因素造成内容存于不同节点，将其修复
+const getParagraphNode = (node) => {
+  // todo 微信公众号用于分段的标签为<p>, <section>, <blockquote>
+  if(!lineFeedTags.includes(node.tagName)) {
+    node = node.parentNode ? getParagraphNode(node.parentNode) : null;
+  }
+  return node;
 }
 
 const createParagraphContent = (nodes) => {
@@ -93,44 +96,68 @@ const createParagraphContent = (nodes) => {
   nodes.forEach(node => {
     // 获取此节点的分段节点
     const paragraphNode = getParagraphNode(node);
-    const paragraphIndex = paragraphPool.indexOf(paragraphNode);
-    let paragraphContent = paragraphContents[paragraphIndex];
-    if(paragraphIndex === -1) {
-      paragraphContent = [];
-      paragraphContents.push(paragraphContent)
-      paragraphPool.push(paragraphNode)
+    if(!paragraphNode) {
+      paragraphPool.push(null);
+      paragraphContents.push([node]);
+      return;
     }
-    paragraphContent.push(node);
+
+    const paragraphIndex = paragraphPool.indexOf(paragraphNode);
+    if(paragraphIndex === -1) {
+      paragraphPool.push(paragraphNode);
+      paragraphContents.push([node]);
+    } else {
+      const paragraphContent = paragraphContents[paragraphIndex];
+      paragraphContent.push(node);
+    }
   })
   return paragraphContents;
 }
 
-// * 第五步，生成DOM
-const getDOMByType = (paragraphNode) => {
-  let dom = "";
+// ! 第四步，生成DOM
+const getDOMByType = (paragraphNode, configs) => {
+  const cfgOutput = configs.output;
+  const cssH = {
+    'line-height': cfgOutput.passage_lineheight,
+  };
+  const cssParagraph = {
+    'font-size': cfgOutput.passage_fontsize,
+    'line-height': cfgOutput.passage_lineheight,
+    'text-align': cfgOutput.passage_textalign,
+  };
+  const cssDesc = {
+    'font-size': cfgOutput.imgdesc_fontsize,
+    'line-height': cfgOutput.imgdesc_lineheight,
+    'text-align': cfgOutput.imgdesc_textalign,
+  };
+  const cssImg = {
+    'text-align': cfgOutput.img_textalign,
+  };
+
   switch(paragraphNode.type) {
     case "img": {
       const p = document.createElement("p");
+      $(p).css(cssImg);
+
       const img = document.createElement("img");
       img.src = paragraphNode.content;
       p.appendChild(img);
-      dom = p;
-      break;
+      return p;
     }
     case "text": {
       const p = document.createElement("p");
+      $(p).css(cssParagraph);
+
       p.innerText = paragraphNode.content;
-      dom = p;
-      break;
+      return p;
     }
     default: {
-
+      return "";
     }
   }
-  return dom;
 }
 
-const parseDOM = (paragraphContents) => {
+const parseDOM = (paragraphContents, configs) => {
   return paragraphContents.reduce((dom, paragraph) => {
     // * 获取类型及内容
     const paragraphNode = paragraph.reduce((content, node) => {
@@ -149,7 +176,7 @@ const parseDOM = (paragraphContents) => {
     }, new ParagraphNode());
 
     // * 根据类型内容生成DOM
-    const nodeDOM = getDOMByType(paragraphNode);
+    const nodeDOM = getDOMByType(paragraphNode, configs);
     if(nodeDOM) {
       dom.push(nodeDOM);
     }
@@ -303,13 +330,11 @@ export const catchHtml = (selector) => {
   const wechatNodes = analysisWechatNode($entry);
   const articleNodes = filterNodes(wechatNodes);
   const paragraphContent = createParagraphContent(articleNodes);
-  const parsed = parseDOM(paragraphContent);
+  const parsed = parseDOM(paragraphContent, configs);
 
   // const analysisTree = analysisChildNodeType($entry, configs.site);
   // const parsed = flattenDeep(parseTree(analysisTree, configs, []));
 
-
-  console.log(parsed);
   const html = parsed.filter(node => !!(node && node.innerHTML)).map(node => {
     return node.outerHTML ? node.outerHTML : node.contentText;
   }).join('');
