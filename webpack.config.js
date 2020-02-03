@@ -192,7 +192,47 @@ const reflowConfig = {
   entry: {
     reflowed: './src/reflowed.js',
   },
+  module: {
+    rules: [
+      {
+        test: /\.vue/,
+        use: [{
+          loader: 'vue-loader',
+        }],
+      },
+      {
+        test: /\.scss$/,
+        use: [{
+          loader: MiniCssExtractPlugin.loader,
+        }, {
+          loader: 'css-loader',
+        }, {
+          loader: 'sass-loader',
+        }]
+      },
+      {
+        test: /\.css/,
+        use: [
+          {
+            loader: MiniCssExtractPlugin.loader
+          },
+          {
+            loader: 'css-loader',
+          }
+        ]
+      },
+    ]
+  },
+  resolve: {
+    alias: {
+      'vue$': 'vue/dist/vue.esm.js' 
+    }
+  },
   plugins: [
+    new MiniCssExtractPlugin({
+      filename: '[name]_style.css'
+    }),
+    new VueLoaderPlugin(),
     new HtmlWebpackPlugin({
       title: '排版页',
       filename: 'reflowed.html',
