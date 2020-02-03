@@ -10,7 +10,11 @@ const BOLD_WEIGHT = 400;
 const lineFeedTags = ["IMG", "P", "SECTION", "BLOCKQUOTE",
                       "H1", "H2", "H3", "H4", "H5", "H6"];
 const ignoreTags = ["BR", "HR", "SVG", "CANVAS", "AUDIO", "VIDEO", 
-                    "BUTTON", "SELECT", "SCRIPT" ,"TEXTAREA", "INPUT", "IFRAME"]
+                    "BUTTON", "SELECT", "SCRIPT" ,"TEXTAREA", "INPUT", "IFRAME"];
+const punctuations = ["。", "？", "！", "，", "、", "；", "：","（", "）", 
+                      "〔", "〕", "…", "—", "～", "﹏", "￥"];
+
+const MAX_TITLE_LENGTH = 18;
 
 class ParagraphNode {
   constructor(type, content = "") {
@@ -115,20 +119,23 @@ const createParagraphContent = (nodes) => {
 }
 
 // ! 第四步，生成DOM
+const isSubHead = (text) => {
+  if(text && !punctuations.includes(text[text.length - 1]) && text.length < MAX_TITLE_LENGTH){
+    return true;
+  } else{
+    return false
+  }
+}
+
 const getDOMByType = (paragraphNode, configs) => {
   const cfgOutput = configs.output;
-  const cssH = {
-    'line-height': cfgOutput.passage_lineheight,
-  };
   const cssParagraph = {
     'font-size': cfgOutput.passage_fontsize,
     'line-height': cfgOutput.passage_lineheight,
     'text-align': cfgOutput.passage_textalign,
   };
-  const cssDesc = {
-    'font-size': cfgOutput.imgdesc_fontsize,
-    'line-height': cfgOutput.imgdesc_lineheight,
-    'text-align': cfgOutput.imgdesc_textalign,
+  const cssCenter = {
+    'text-align': 'center',
   };
   const cssImg = {
     'text-align': cfgOutput.img_textalign,
@@ -147,6 +154,9 @@ const getDOMByType = (paragraphNode, configs) => {
     case "text": {
       const p = document.createElement("p");
       $(p).css(cssParagraph);
+      // todo 小标题居中
+      // ! 此为特殊要求
+      if(isSubHead(paragraphNode.content)) $(p).css(cssCenter);
 
       p.innerText = paragraphNode.content;
       return p;
