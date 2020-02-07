@@ -4,6 +4,7 @@
   "description": "抓取网页内容并格式化的插件",
   "scripts": {
     "dev": "cross-env NODE_ENV=development webpack --config webpack.config.js --watch",
+    "build": "cross-env NODE_ENV=production webpack --config webpack.config.js --progress",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
