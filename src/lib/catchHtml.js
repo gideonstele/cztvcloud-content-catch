@@ -3,11 +3,20 @@ import trimCSSURL from '../utils/trimcssurl';
 import { flattenDeep } from 'lodash';
 
 // todo default value
-// * 220以下识别为广告
+// * filter width and height smaller than 220px
 const MAX_PIC_VALUE = 220;
 const MAX_PIC_SINGLE_AD_VALUE = 60;
 // * 400以上为加粗
 const BOLD_WEIGHT = 400;
+
+// todo 基于当前数量来判断是否为小标题
+const MIN_SUBTITLE_COUNT = 1;
+// todo 基于当前数量来判断是否为图说
+const MIN_IMAGE_DESC_COUNT = 2;
+// todo 小标题最大识别数
+const MAX_SUBTITLE_LENGTH = 22;
+// todo 图说最大识别数
+const MAX_IMAGE_DESC_LENGTH = 30;
 
 const lineFeedTags = ["IMG", "P", "SECTION", "BLOCKQUOTE",
                       "H1", "H2", "H3", "H4", "H5", "H6"];
@@ -17,11 +26,7 @@ const punctuations = [".", "。", "?", "？", "!", "！", ",", "，", "、", "�
 const needMerge = [",", "，"];
 const compareCss = ["fontFamily", "fontSize", "color"];
 
-const MIN_SUBTITLE_COUNT = 1;
-const MIN_IMAGE_DESC_COUNT = 2;
-const MAX_SUBTITLE_LENGTH = 22;
-const MAX_IMAGE_DESC_LENGTH = 30;
-
+// todo type enum
 const NodeType = {
   IMAGE: "IMG",
   TEXT: "TEXT"
@@ -96,7 +101,6 @@ const filterNodes = (nodes) => {
 // ! 第三步，生成结构
 // * 不同样式等因素造成内容存于不同节点，将其修复
 const getParagraphNode = (node) => {
-  // todo 微信公众号用于分段的标签为<p>, <section>, <blockquote>
   if(!lineFeedTags.includes(node.tagName)) {
     node = node.parentNode ? getParagraphNode(node.parentNode) : null;
   }
@@ -261,7 +265,7 @@ const getDOMByType = (paragraphNode, configs) => {
   const cssDesc = {
     'font-size': cfgOutput.imgdesc_fontsize,
     'line-height': cfgOutput.imgdesc_lineheight,
-    'text-align': paragraphNode.content.length > 22 ? 'justify' : 'center',
+    'text-align': paragraphNode.content.length > MAX_SUBTITLE_LENGTH ? 'justify' : 'center',
   };
   const cssImg = {
     'text-align': cfgOutput.img_textalign,
