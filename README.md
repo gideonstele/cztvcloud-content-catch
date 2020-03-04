@@ -13,13 +13,16 @@
 ### 功能预览🎈
 
 * _**选取窗口**_
-![](https://s2.ax1x.com/2020/03/04/355Pun.png)
+
+![](https://user-gold-cdn.xitu.io/2020/3/4/170a374e9c3fbc05?w=486&h=162&f=png&s=7382)
 
 * _**排版结果**_
-![](https://s2.ax1x.com/2020/03/04/355iBq.png)
+
+![](https://user-gold-cdn.xitu.io/2020/3/4/170a374fc01b5214?w=910&h=857&f=png&s=451318)
 
 * _**图片操作**_
-![](https://s2.ax1x.com/2020/03/04/355AEV.png)
+
+![](https://user-gold-cdn.xitu.io/2020/3/4/170a37513c404dd7?w=457&h=364&f=png&s=106212)
 
 ### 如何运行😊
 
