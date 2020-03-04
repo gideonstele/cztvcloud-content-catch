@@ -13,13 +13,13 @@
 ### 功能预览🎈
 
 * _**选取窗口**_
-![:-](https://img04.sogoucdn.com/app/a/100520146/07a41cc3c6948fd0f57742933168bb20)
+![](https://s2.ax1x.com/2020/03/04/355Pun.png)
 
 * _**排版结果**_
-![:-](https://img04.sogoucdn.com/app/a/100520146/b2e051049bc1afc06434c89c39af9766)
+![](https://s2.ax1x.com/2020/03/04/355iBq.png)
 
 * _**图片操作**_
-![:-](https://img02.sogoucdn.com/app/a/100520146/11fdb54072ed9bd826038209cab23459)
+![](https://s2.ax1x.com/2020/03/04/355AEV.png)
 
 ### 如何运行😊
 
