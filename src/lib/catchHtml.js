@@ -1,9 +1,11 @@
 import $ from 'jquery';
+import trimCSSURL from '../utils/trimcssurl';
 import { flattenDeep } from 'lodash';
 
 // todo default value
 // * 220以下识别为广告
 const MAX_PIC_VALUE = 220;
+const MAX_PIC_SINGLE_AD_VALUE = 60;
 // * 400以上为加粗
 const BOLD_WEIGHT = 400;
 
@@ -11,16 +13,18 @@ const lineFeedTags = ["IMG", "P", "SECTION", "BLOCKQUOTE",
                       "H1", "H2", "H3", "H4", "H5", "H6"];
 const ignoreTags = ["BR", "HR", "SVG", "CANVAS", "AUDIO", "VIDEO", 
                     "BUTTON", "SELECT", "SCRIPT" ,"TEXTAREA", "INPUT", "IFRAME"];
-const punctuations = ["。", "？", "！", "，", "、", "；", "：","（", "）", 
-                      "〔", "〕", "…", "—", "～", "﹏", "￥"];
+const punctuations = [".", "。", "?", "？", "!", "！", ",", "，", "、", "；", "：", "…", "—", "～", "﹏", "￥"];
+const needMerge = [",", "，"];
+const compareCss = ["fontFamily", "fontSize", "color"];
 
-const MAX_TITLE_LENGTH = 18;
+const MIN_SUBTITLE_COUNT = 1;
+const MIN_IMAGE_DESC_COUNT = 2;
+const MAX_SUBTITLE_LENGTH = 22;
+const MAX_IMAGE_DESC_LENGTH = 30;
 
-class ParagraphNode {
-  constructor(type, content = "") {
-    this.type = type;
-    this.content = content;
-  }
+const NodeType = {
+  IMAGE: "IMG",
+  TEXT: "TEXT"
 }
 
 // 元素是块(block)还是行(inline)或不可见(false)
@@ -39,13 +43,20 @@ const inlineOrBlock = ($n) => {
 // 判断当前元素是不是加粗的
 const isBold = ($n) => $n.css('font-weight') > BOLD_WEIGHT;
 
+const isBoldDOM = (el) => el.tagName === "STRONG" || 
+                          $(el).css('font-weight') > BOLD_WEIGHT ||
+                          (el.parentNode && el.parentNode.tagName === "STRONG") ||
+                          (el.parentNode && $(el.parentNode).css('font-weight') > BOLD_WEIGHT)
+
 // 判断当前元素是不是图片
 const isImg = ($n) => $n.is('img')
 
 // 获取图片真实的地址（考虑懒加载和防爬）
 const getImgSrc = (img) => {
   const $img = $(img);
-  if (img.width < MAX_PIC_VALUE && img.height < MAX_PIC_VALUE) {
+  // todo width !== height 文中必要防止二维码
+  if (img.width < MAX_PIC_SINGLE_AD_VALUE || img.height < MAX_PIC_SINGLE_AD_VALUE ||
+    img.width !== img.height && img.width < MAX_PIC_VALUE && img.height < MAX_PIC_VALUE) {
     return '';
   }
   const src = img.src.startsWith('data:image/') || !img.src ? ($img.attr('data-src') || trimCSSURL($img.css('background-image'))) : img.src;
@@ -54,12 +65,12 @@ const getImgSrc = (img) => {
 
 // ! 第一步，先往下找最底层，取节点
 // * 节点中包括文本及图片
-const analysisWechatNode = (node, total = []) => {
+const analysisChildNode = (node, total = []) => {
   if(ignoreTags.includes(node.tagName)){
     // todo ignore tag
   }
   else if(node.childNodes.length) {
-    node.childNodes.forEach(n => total.concat(analysisWechatNode(n, total)));
+    node.childNodes.forEach(n => total.concat(analysisChildNode(n, total)));
   } else {
     total.push(node);
   }
@@ -75,11 +86,11 @@ const filterImgOrText = (nodes) => {
     (node.textContent.trim() && node.nodeType !== 8) // todo 取非注释文本, 8为注释节点
     ));
 }
-
 const filterNodes = (nodes) => {
-  let result = nodes;
-  result = filterImgOrText(result);
-  return result;
+  if(!nodes && nodes.length === 0) {
+    return nodes;
+  }
+  return filterImgOrText(nodes);
 }
 
 // ! 第三步，生成结构
@@ -91,12 +102,48 @@ const getParagraphNode = (node) => {
   }
   return node;
 }
+// * "IMG" 或者 "TEXT"
+const getContentType = (articleNodes) => {
+  return articleNodes.every(node => node.tagName === "IMG") ? NodeType.IMAGE : NodeType.TEXT;
+}
 
-const createParagraphContent = (nodes) => {
+// * 
+const parseContent = (articleNodes, type) => {
+  if(type === NodeType.IMAGE) {
+    return articleNodes.reduce((content, node) => {
+      content = getImgSrc(node);
+      return content;
+    }, "");
+  } else {
+    return articleNodes.reduce((content, node) => {
+      content += node.textContent.trim();
+      return content
+    }, "");
+  }
+}
+
+/* 生成基础节点池, 支持扩展
+interface ArticleNode {
+  index: number, 
+  type: string, 
+  isImageDesc: boolean, 
+  isSubTitle: boolean, 
+  lastNode: ArticleNode | null,
+  nextNode: ArticleNode | null,
+  paragraphNode: element, 
+  nodes: Array<element>,
+  content: string
+}
+*/
+const createBaseNodes = (nodes) => {
+  if(!nodes && nodes.length === 0) {
+    return nodes;
+  }
   // 存放所有的段落
   const paragraphPool = [];
   // 存放段落对应的内容
   const paragraphContents = [];
+
   nodes.forEach(node => {
     // 获取此节点的分段节点
     const paragraphNode = getParagraphNode(node);
@@ -115,18 +162,92 @@ const createParagraphContent = (nodes) => {
       paragraphContent.push(node);
     }
   })
-  return paragraphContents;
+
+  const nodeArray = paragraphContents.reduce((result, paragraph, i) => {
+    const type = getContentType(paragraph);
+    const content = parseContent(paragraph, type);
+    const isMerge = 
+      content && type === NodeType.TEXT &&
+      needMerge.includes(content[content.length - 1]);
+    if(content) {
+      result = [...result, {
+        index: i,
+        type: type,
+        isMerge: isMerge,
+        isImageDesc: false,
+        isSubTitle: false,
+        lastNode: null,
+        nextNode: null,
+        paragraphNode: paragraphPool[i],
+        nodes: paragraph,
+        content: content,
+      }]
+    }
+    return result;
+  }, []);
+
+
+  return nodeArray;
+}
+const addAssociate = (baseNodes) => {
+  return baseNodes.reduce((tree, node, index, obj) => {
+    index > 0 && (node.lastNode = obj[index - 1]);
+    index < obj.length && (node.nextNode = obj[index + 1]);
+    return tree;
+  }, baseNodes)
+};
+
+const isSameCss = (el1, el2) => {
+  return compareCss.every(css => $(el1).css(css) === $(el2).css(css))
 }
 
-// ! 第四步，生成DOM
-const isSubHead = (text) => {
-  if(text && !punctuations.includes(text[text.length - 1]) && text.length < MAX_TITLE_LENGTH){
-    return true;
-  } else{
-    return false
+const analyseNodeTree = (nodes) => {
+  const maySubTitleOrImageDesc = nodes.reduce((total, node) => {
+    if(node.type === NodeType.TEXT &&
+      node.nodes.length === 1 &&
+      node.content.length < Math.max(MAX_SUBTITLE_LENGTH, MAX_IMAGE_DESC_LENGTH) &&
+      !punctuations.includes(node.content[node.content.length - 1])) {
+        total.push(node);
+      }
+    return total;
+  }, []);
+
+  maySubTitleOrImageDesc.forEach(node => {
+    const nodeEl = node.nodes[0].parentNode;
+    const sameNode = maySubTitleOrImageDesc.filter(item => isSameCss(item.nodes[0].parentNode, nodeEl));
+    if(!isBoldDOM(nodeEl) &&
+      sameNode.length >= MIN_IMAGE_DESC_COUNT &&
+      sameNode.every(item => item.lastNode && item.lastNode.type === NodeType.IMAGE)) {
+        node.isImageDesc = true;
+    }
+    if(!node.isImageDesc && sameNode.length >= MIN_SUBTITLE_COUNT &&
+      sameNode.every(item => item.content.length <= MAX_SUBTITLE_LENGTH)) {
+        node.isSubTitle = true;
+      } 
+  });
+
+  return nodes;
+}
+const parseParagraphNodeTree = (nodes) => {
+  // todo 生成树
+  const baseNodes = createBaseNodes(nodes);
+  // todo 生成树，强化节点关联
+  const hasAssociateTree = addAssociate(baseNodes);
+  // todo 分析小标题和图片描述并赋值
+  const analysedNodeTree = analyseNodeTree(hasAssociateTree);
+
+  return analysedNodeTree;
+}
+
+const getDOMText = (paragraphNode) => {
+  if(paragraphNode.isMerge && paragraphNode.nextNode && paragraphNode.nextNode.type === NodeType.TEXT) {
+    return paragraphNode.content += getDOMText(paragraphNode.nextNode);
+  } else {
+    return paragraphNode.content;
   }
 }
 
+// ! 第四步，生成DOM
 const getDOMByType = (paragraphNode, configs) => {
   const cfgOutput = configs.output;
   const cssParagraph = {
@@ -137,12 +258,17 @@ const getDOMByType = (paragraphNode, configs) => {
   const cssCenter = {
     'text-align': 'center',
   };
+  const cssDesc = {
+    'font-size': cfgOutput.imgdesc_fontsize,
+    'line-height': cfgOutput.imgdesc_lineheight,
+    'text-align': paragraphNode.content.length > 22 ? 'justify' : 'center',
+  };
   const cssImg = {
     'text-align': cfgOutput.img_textalign,
   };
 
   switch(paragraphNode.type) {
-    case "img": {
+    case NodeType.IMAGE: {
       const p = document.createElement("p");
       $(p).css(cssImg);
 
@@ -151,14 +277,19 @@ const getDOMByType = (paragraphNode, configs) => {
       p.appendChild(img);
       return p;
     }
-    case "text": {
+    case NodeType.TEXT: {
+      if(paragraphNode.lastNode && paragraphNode.lastNode.isMerge) {
+        return '';
+      }
       const p = document.createElement("p");
       $(p).css(cssParagraph);
-      // todo 小标题居中
-      // ! 此为特殊要求
-      if(isSubHead(paragraphNode.content)) $(p).css(cssCenter);
+      if(paragraphNode.isImageDesc) {
+        $(p).css(cssDesc);
+      } else if (paragraphNode.isSubTitle) {
+        $(p).css(cssCenter);
+      }
 
-      p.innerText = paragraphNode.content;
+      p.innerText = getDOMText(paragraphNode);
       return p;
     }
     default: {
@@ -167,24 +298,8 @@ const getDOMByType = (paragraphNode, configs) => {
   }
 }
 
-const parseDOM = (paragraphContents, configs) => {
-  return paragraphContents.reduce((dom, paragraph) => {
-    // * 获取类型及内容
-    const paragraphNode = paragraph.reduce((content, node) => {
-      if(node.tagName === "IMG") {
-        const imgStr = getImgSrc(node);
-        if(imgStr) {
-          content.type = "img"
-          content.content = imgStr;
-        }
-      } else {
-        content.type = "text";
-        content.content += node.textContent.trim();
-      }
-
-      return content;
-    }, new ParagraphNode());
-
+const parseDOM = (paragraphNodeTree, configs) => {
+  return paragraphNodeTree.reduce((dom, paragraphNode) => {
     // * 根据类型内容生成DOM
     const nodeDOM = getDOMByType(paragraphNode, configs);
     if(nodeDOM) {
@@ -326,7 +441,6 @@ function parseTree(nodes, configs, collections = [], depth = 0) {
   return collections;
 }
 
-
 // type = img | desc | title | inline
 export const catchHtml = (selector) => {
   const configs = window.configs;
@@ -337,10 +451,11 @@ export const catchHtml = (selector) => {
       message: '没有找到设定的入口',
     }
   }
-  const wechatNodes = analysisWechatNode($entry);
-  const articleNodes = filterNodes(wechatNodes);
-  const paragraphContent = createParagraphContent(articleNodes);
-  const parsed = parseDOM(paragraphContent, configs);
+  const childNodes = analysisChildNode($entry);
+  const articleNodes = filterNodes(childNodes);
+  // todo 通过此tree来智能分析
+  const paragraphNodeTree = parseParagraphNodeTree(articleNodes);
+  const parsed = parseDOM(paragraphNodeTree, configs);
 
   // const analysisTree = analysisChildNodeType($entry, configs.site);
   // const parsed = flattenDeep(parseTree(analysisTree, configs, []));

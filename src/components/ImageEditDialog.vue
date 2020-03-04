@@ -6,7 +6,7 @@
     top=""
     custom-class="canvas-dialog"
     class="dialog">
-    <div class="canvas-content">
+    <div ref="content" class="canvas-content">
       <canvas ref="canvas"></canvas>
     </div>
     <div slot="footer" class="content-toolbar">
@@ -131,6 +131,12 @@ export default {
     zoom() {
       return this.canvas.offsetWidth / this.canvas.width;
     },
+    scrollTop() {
+      return this.$refs.content.parentNode.scrollTop;
+    },
+    scrollLeft() {
+      return this.$refs.content.parentNode.scrollLeft;
+    },
     left(el) {
       return el.offsetParent ? el.offsetLeft + this.left(el.offsetParent) : el.offsetLeft;
     },
@@ -154,14 +160,14 @@ export default {
     },
     mousedown(e) {
       this.canvas.setPointerCapture(e.pointerId);
-      this.mouseX = e.clientX - this.left(e.target);
-      this.mouseY = e.clientY - this.top(e.target);
+      this.mouseX = e.clientX - this.left(e.target) + this.scrollLeft();
+      this.mouseY = e.clientY - this.top(e.target) + this.scrollTop();
       this.canvas.addEventListener('pointermove', this.mousemove);
       this.canvas.addEventListener('pointerup', this.mouseup);
     },
     mousemove(e) {
-      this.mouseX = e.clientX - this.left(e.target);
-      this.mouseY = e.clientY - this.top(e.target);
+      this.mouseX = e.clientX - this.left(e.target) + this.scrollLeft();
+      this.mouseY = e.clientY - this.top(e.target) + this.scrollTop();
       this.clip();
     },
     mouseup(e) {
@@ -188,16 +194,29 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+
+  ::v-deep .el-dialog__body {
+    overflow: auto;
+  }
 }
+
 ::v-deep .canvas-dialog {
   margin: 0;
   min-width: 300px;
   max-width: 600px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
 }
+
 .canvas-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
   canvas {
     max-width: 100%;
-    max-height: 100%; 
+    max-height: 100%;
   }
 }
 .content-toolbar {
